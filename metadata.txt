@@ -1,0 +1,47 @@
+# This file contains metadata for your plugin.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=MatchUsingTime
+qgisMinimumVersion=3.0
+description=Match the time and point sequence with location information with the file with time information to generate the point at the position of the file.
+version=0.1
+author=Yoichi Kayama/Aero Asahi Corp
+email=yoichi.kayama@gmail.com
+
+about=Match the time and point sequence with location information with the file with time information to generate the point at the position of the file.
+
+tracker=https://github.com/yoichigmf/MatchUsingTime/issues
+repository=https://github.com/yoichigmf/MatchUsingTime.git
+# End of mandatory metadata
+
+# Recommended items:
+
+hasProcessingProvider=yes
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=python, GPS
+
+homepage=https://github.com/yoichigmf/MatchUsingTime
+category=Analysis
+icon=icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
+# Since QGIS 3.8, a comma separated list of plugins to be installed
+# (or upgraded) can be specified.
+# Check the documentation for more information.
+# plugin_dependencies=
+
+Category of the plugin: Raster, Vector, Database or Web
+# category=
+
+# If the plugin can run on QGIS Server.
+server=False
+
