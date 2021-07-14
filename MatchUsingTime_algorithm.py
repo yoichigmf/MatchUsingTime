@@ -35,7 +35,9 @@ from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterFeatureSink)
+                       QgsProcessingParameterFeatureSink,
+                       QgsProcessingParameterFile,
+                        QgsProcessingParameterField)
 
 
 class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
@@ -58,6 +60,11 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT = 'OUTPUT'
     INPUT = 'INPUT'
+    
+    TFIELD = 'TFIELD'
+    
+    IFOLDER = 'IFOLDER'
+    
 
     def initAlgorithm(self, config):
         """
@@ -71,9 +78,31 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
                 self.tr('Input layer'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint ]
             )
         )
+        
+        self.addParameter(
+        QgsProcessingParameterField(
+                self.TFIELD,
+                'Time field',
+                type=QgsProcessingParameterField.DateTime ,
+                parentLayerParameterName=self.INPUT))
+                
+        
+        self.addParameter(
+        
+        QgsProcessingParameterFile(
+                self.IFOLDER,
+                'Input folder',  
+                behavior=QgsProcessingParameterFile.Folder,
+                fileFilter='JPEG (*.JPG)',
+                defaultValue=None
+            )
+            
+        )
+        
+        
 
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
