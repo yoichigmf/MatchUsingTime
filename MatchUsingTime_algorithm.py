@@ -30,14 +30,26 @@ __copyright__ = '(C) 2021 by Yoichi Kayama/Aero Asahi Corp'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication
+import os
+import stat
+import time
+import datetime
+import glob
+
+from qgis.PyQt.QtCore import ( QCoreApplication,
+                             QDateTime )
+                             
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFeatureSink,
                        QgsProcessingParameterFile,
+                       QgsWkbTypes,
                         QgsProcessingParameterField)
+                        
+
+
 
 
 class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
@@ -113,6 +125,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 self.tr('Output layer')
             )
         )
+        
+
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -123,12 +137,48 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         # to uniquely identify the feature sink, and must be included in the
         # dictionary returned by the processAlgorithm function.
         source = self.parameterAsSource(parameters, self.INPUT, context)
+        
+        
+        
+        
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
                 context, source.fields(), source.wkbType(), source.sourceCrs())
 
+
+
+        tgFields = self.parameterAsFields( parameters, self.TFIELD, context )
+        
+        
+        pArray =  self.createTimeList(  source, tgFields[0], feedback   )
+        
+        #print(pArray)
+        
+        nArray = sorted( pArray , key=lambda x:x["time"] )
+        
+        print( nArray )
+        
+        
+        tgfolder = self.parameterAsString(parameters, self.IFOLDER, context)
+        files = glob.glob(tgfolder + "/*.JPG")
+        for file in files:
+            modTimesinceEpoc = os.path.getmtime(file)
+            #modificationTime = time.strftime('%Y-%m-%d %H:%M:%S', modTimesinceEpoc)
+            dt = datetime.datetime.fromtimestamp(modTimesinceEpoc)
+            motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
+            print(motstr)
+           
+            qftime = QDateTime.fromString(motstr, '%Y-%m-%d %H:%M:%S')
+            #qftime = QDateTime.fromMSecsSinceEpoch(modTimesinceEpoc)
+            #print(file)
+            print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
+            
+            
+        
         # Compute the number of steps to display within the progress bar and
         # get features from source
         total = 100.0 / source.featureCount() if source.featureCount() else 0
+        
+        
         features = source.getFeatures()
 
         for current, feature in enumerate(features):
@@ -142,6 +192,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             # Update the progress bar
             feedback.setProgress(int(current * total))
 
+       
+    
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
         # algorithms may return multiple feature sinks, calculated numeric
@@ -149,6 +201,39 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         # dictionary, with keys matching the feature corresponding parameter
         # or output names.
         return {self.OUTPUT: dest_id}
+
+    def createTimeList( self, source, tgField, feedback   ):
+    
+        retarray = []
+        
+        #print(tgField)
+    
+        #features = source.getFeatures()
+
+        for  feature in source.getFeatures():
+            tgTime = feature[tgField]
+            
+            #print(tgTime)
+ 
+            geom = feature.geometry()
+          #  print(QgsWkbTypes.displayString(geom.wkbType()))           
+            if geom.wkbType() == QgsWkbTypes.Point or geom.wkbType() == QgsWkbTypes.PointZ or geom.wkbType() == QgsWkbTypes.Point25D  :
+                  #print("point ")
+                  
+                  ptg =  geom.asPoint();
+                  
+                  pt = {"time": tgTime, "x": ptg.x(), "y": ptg.y()}
+                  
+                  retarray.append( pt );
+            
+        
+            # Stop the algorithm if cancel button has been clicked
+            if feedback.isCanceled():
+                break
+    
+        return retarray
+        
+    
 
     def name(self):
         """
