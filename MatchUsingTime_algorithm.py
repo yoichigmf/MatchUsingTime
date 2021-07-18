@@ -159,6 +159,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         
         
         tgfolder = self.parameterAsString(parameters, self.IFOLDER, context)
+        
+        #  ファイル拡張子のフィルタ  再検討  大文字、小文字  MP4 とかの対応
         files = glob.glob(tgfolder + "/*.JPG")
         for file in files:
             modTimesinceEpoc = os.path.getmtime(file)
@@ -171,6 +173,14 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             #qftime = QDateTime.fromMSecsSinceEpoch(modTimesinceEpoc)
             #print(file)
             print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
+            
+            #  search nearest time point coordinate
+            np = self.getTimeNearest( modTimesinceEpoc , nArray )
+            
+            print(np)
+            dt = datetime.datetime.fromtimestamp(np["time"])
+            motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
+            print(motstr)
             
             
         
@@ -201,6 +211,58 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         # dictionary, with keys matching the feature corresponding parameter
         # or output names.
         return {self.OUTPUT: dest_id}
+        
+
+    
+    def getTimeNearest(self,  modTimesinceEpoc , nArray ):
+        tw = nArray[0]
+        
+        #   先頭ポイントと指定ファイルの時間差
+        sa = abs( modTimesinceEpoc-tw["time"] )
+        
+        print( modTimesinceEpoc )
+    
+        last_pt = tw
+        
+        
+
+        for pt in nArray:
+        
+            #print(sa)
+            print(modTimesinceEpoc )
+            print(pt["time"])
+            
+            print(pt["time"])      
+            
+            if  modTimesinceEpoc > pt["time"]:
+            
+                nsa = abs( modTimesinceEpoc-pt["time"] )
+                 
+                if nsa < sa :
+                       sa = nsa
+                       
+                       
+            else:
+                #print("else")
+                nsa = abs( modTimesinceEpoc-pt["time"] )
+                
+                print( nsa )
+                
+               
+                if nsa < sa :
+                      return pt
+                else:
+                      return last_pt
+               
+               
+            last_pt = pt
+            
+
+            
+    
+        return last_pt
+    
+    
 
     def createTimeList( self, source, tgField, feedback   ):
     
@@ -213,16 +275,19 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         for  feature in source.getFeatures():
             tgTime = feature[tgField]
             
-            #print(tgTime)
+            file_update_unix_time = tgTime.toSecsSinceEpoch()
+            dt = datetime.datetime.fromtimestamp(file_update_unix_time)
+            #print(tgTime.toSecsSinceEpoch())
+            #print( dt )
  
             geom = feature.geometry()
-          #  print(QgsWkbTypes.displayString(geom.wkbType()))           
+          #  print(QgsWkbTypes.displayString(geom.wkbType()))             マルチポイントとかの場合の対応が必要
             if geom.wkbType() == QgsWkbTypes.Point or geom.wkbType() == QgsWkbTypes.PointZ or geom.wkbType() == QgsWkbTypes.Point25D  :
                   #print("point ")
                   
                   ptg =  geom.asPoint();
                   
-                  pt = {"time": tgTime, "x": ptg.x(), "y": ptg.y()}
+                  pt = {"time": file_update_unix_time, "x": ptg.x(), "y": ptg.y()}
                   
                   retarray.append( pt );
             
