@@ -149,6 +149,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         fields = QgsFields()
         fields.append(QgsField("idc" , QVariant.Int))
         fields.append(QgsField("filename", QVariant.String))
+        fields.append(QgsField("filetime", QVariant.String))
+        fields.append(QgsField("logtime", QVariant.String))
         
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
                 context, fields, QgsWkbTypes.Point, source.sourceCrs())
@@ -180,9 +182,9 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             modTimesinceEpoc = modTimesinceEpoc - ( 9.0 * 60.0 * 60.0 )
             
             dt = datetime.datetime.fromtimestamp(modTimesinceEpoc)
-            motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
-            print("file ==")
-            print(modTimesinceEpoc)
+            motstr = dt.strftime('%Y-%m-%d %H:%M:%S')
+            #print("file ==")
+            # print(modTimesinceEpoc)
            
             qftime = QDateTime.fromString(motstr, '%Y-%m-%d %H:%M:%S')
             #qftime = QDateTime.fromMSecsSinceEpoch(modTimesinceEpoc)
@@ -196,7 +198,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             
             #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
-            motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
+            logstr = dt.strftime('%Y-%m-%d %H:%M:%S');
             #print("nearest ==")
             #print(np["time"])
             
@@ -204,6 +206,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             
             nfeature["idc"]  = idc
             nfeature["filename"] = file
+            nfeature["filetime"] = motstr
+            nfeature["logtime"] = logstr
             
             pointxy = QgsPointXY(np["x"],np["y"])
             geom = QgsGeometry.fromPointXY(pointxy)
