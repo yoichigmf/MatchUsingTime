@@ -97,7 +97,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
-                self.tr('Input layer'),
+                self.tr('Time log layer'),
                 [QgsProcessing.TypeVectorPoint ]
             )
         )
@@ -126,7 +126,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
         QgsProcessingParameterString(
                 self.EXT,
-                'File extension',  
+                'Input File extension',  
                # behavior=QgsProcessingParameterFile.Folder,
                # fileFilter='JPEG (*.JPG)',
                 defaultValue=".JPG"
@@ -270,7 +270,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         #   先頭ポイントと指定ファイルの時間差
         sa = abs( modTimesinceEpoc-tw["time"] )
         
-        print( modTimesinceEpoc )
+        #print( modTimesinceEpoc )
     
         last_pt = tw
         
@@ -296,7 +296,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 #print("else")
                 nsa = abs( modTimesinceEpoc-pt["time"] )
                 
-                print( nsa )
+                #print( nsa )
                 
                
                 if nsa < sa :
@@ -328,8 +328,9 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             #print(type(tgTime) )
               #   型判定
             if isinstance(tgTime, str):
-            
-                  if  str =="0:00:00":
+                  #print( tgTime )
+                  if  tgTime =='0:00:00':
+                         #print("continue")
                          continue
                          
                   dt = datetime.datetime.strptime(tgTime, '%Y/%m/%d %H:%M:%S')
@@ -337,7 +338,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             else:
             
                   file_update_unix_time = tgTime.toSecsSinceEpoch()
-                  dt = datetime.fromtimestamp(file_update_unix_time)
+                  dt = datetime.datetime.fromtimestamp(file_update_unix_time)
             #print(tgTime.toSecsSinceEpoch())
             #print( dt )
  
