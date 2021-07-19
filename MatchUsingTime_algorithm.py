@@ -51,6 +51,7 @@ from qgis.core import (QgsProcessing,
                        QgsFeature ,
                        QgsFields ,
                        QgsField,
+                       QgsProcessingParameterString,
                         QgsProcessingParameterField)
                         
 
@@ -81,6 +82,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
     TFIELD = 'TFIELD'
     
     IFOLDER = 'IFOLDER'
+    
+    EXT = 'EXT'
     
 
     def initAlgorithm(self, config):
@@ -113,12 +116,23 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 self.IFOLDER,
                 'Input folder',  
                 behavior=QgsProcessingParameterFile.Folder,
-                fileFilter='JPEG (*.JPG)',
+               # fileFilter='JPEG (*.JPG)',
                 defaultValue=None
             )
             
         )
         
+        
+        self.addParameter(
+        QgsProcessingParameterString(
+                self.EXT,
+                'File extension',  
+               # behavior=QgsProcessingParameterFile.Folder,
+               # fileFilter='JPEG (*.JPG)',
+                defaultValue=".JPG"
+            )
+            
+        )
         
 
         # We add a feature sink in which to store our processed features (this
@@ -159,6 +173,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
 
         tgFields = self.parameterAsFields( parameters, self.TFIELD, context )
         
+        fextent = self.parameterAsString( parameters, self.EXT, context )
         
         pArray =  self.createTimeList(  source, tgFields[0], feedback   )
         
@@ -175,7 +190,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         
         idc = 1
         
-        files = glob.glob(tgfolder + "/*.JPG")
+        files = glob.glob(tgfolder + "/*" + fextent )
         for file in files:
             modTimesinceEpoc = os.path.getmtime(file)
             #modificationTime = time.strftime('%Y-%m-%d %H:%M:%S', modTimesinceEpoc)
