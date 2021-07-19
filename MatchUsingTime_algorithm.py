@@ -192,11 +192,13 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             #  search nearest time point coordinate
             np = self.getTimeNearest( modTimesinceEpoc , nArray )
             
+            #   エラーの場合の対応追加
+            
             #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
             motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
-            print("nearest ==")
-            print(np["time"])
+            #print("nearest ==")
+            #print(np["time"])
             
             nfeature = QgsFeature(fields)
             
