@@ -37,7 +37,7 @@ import datetime
 import glob
 
 from qgis.PyQt.QtCore import ( QCoreApplication,
-                             QDateTime )
+                             QDateTime , QVariant)
                              
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
@@ -46,6 +46,11 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFeatureSink,
                        QgsProcessingParameterFile,
                        QgsWkbTypes,
+                       QgsGeometry ,
+                       QgsPointXY ,
+                       QgsFeature ,
+                       QgsFields ,
+                       QgsField,
                         QgsProcessingParameterField)
                         
 
@@ -98,7 +103,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         QgsProcessingParameterField(
                 self.TFIELD,
                 'Time field',
-                type=QgsProcessingParameterField.DateTime ,
+                type=QgsProcessingParameterField.DateTime |QgsProcessingParameterField.String,
                 parentLayerParameterName=self.INPUT))
                 
         
@@ -141,8 +146,12 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         
         
         
+        fields = QgsFields()
+        fields.append(QgsField("idc" , QVariant.Int))
+        fields.append(QgsField("filename", QVariant.String))
+        
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
-                context, source.fields(), source.wkbType(), source.sourceCrs())
+                context, fields, QgsWkbTypes.Point, source.sourceCrs())
 
 
 
@@ -161,46 +170,66 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         tgfolder = self.parameterAsString(parameters, self.IFOLDER, context)
         
         #  ファイル拡張子のフィルタ  再検討  大文字、小文字  MP4 とかの対応
+        
+        idc = 1
+        
         files = glob.glob(tgfolder + "/*.JPG")
         for file in files:
             modTimesinceEpoc = os.path.getmtime(file)
             #modificationTime = time.strftime('%Y-%m-%d %H:%M:%S', modTimesinceEpoc)
+            modTimesinceEpoc = modTimesinceEpoc - ( 9.0 * 60.0 * 60.0 )
+            
             dt = datetime.datetime.fromtimestamp(modTimesinceEpoc)
             motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
-            print(motstr)
+            print("file ==")
+            print(modTimesinceEpoc)
            
             qftime = QDateTime.fromString(motstr, '%Y-%m-%d %H:%M:%S')
             #qftime = QDateTime.fromMSecsSinceEpoch(modTimesinceEpoc)
             #print(file)
-            print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
+            #print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
             
             #  search nearest time point coordinate
             np = self.getTimeNearest( modTimesinceEpoc , nArray )
             
-            print(np)
+            #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
             motstr = dt.strftime('%Y-%m-%d %H:%M:%S');
-            print(motstr)
+            print("nearest ==")
+            print(np["time"])
+            
+            nfeature = QgsFeature(fields)
+            
+            nfeature["idc"]  = idc
+            nfeature["filename"] = file
+            
+            pointxy = QgsPointXY(np["x"],np["y"])
+            geom = QgsGeometry.fromPointXY(pointxy)
+            nfeature.setGeometry(geom)
+            
+            sink.addFeature(nfeature, QgsFeatureSink.FastInsert)
+            idc = idc + 1
+            
             
             
         
         # Compute the number of steps to display within the progress bar and
         # get features from source
-        total = 100.0 / source.featureCount() if source.featureCount() else 0
+        #total = 100.0 / source.featureCount() if source.featureCount() else 0
         
         
-        features = source.getFeatures()
+        #features = source.getFeatures()
 
-        for current, feature in enumerate(features):
+        #for current, feature in enumerate(features):
             # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                break
+         #   if feedback.isCanceled():
+         #       break
 
             # Add a feature in the sink
-            sink.addFeature(feature, QgsFeatureSink.FastInsert)
+           # sink.addFeature(feature, QgsFeatureSink.FastInsert)
 
             # Update the progress bar
-            feedback.setProgress(int(current * total))
+        #    feedback.setProgress(int(current * total))
 
        
     
@@ -229,10 +258,10 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         for pt in nArray:
         
             #print(sa)
-            print(modTimesinceEpoc )
-            print(pt["time"])
+            #print(modTimesinceEpoc )
+            #print(pt["time"])
             
-            print(pt["time"])      
+           # print(pt["time"])      
             
             if  modTimesinceEpoc > pt["time"]:
             
@@ -275,8 +304,19 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         for  feature in source.getFeatures():
             tgTime = feature[tgField]
             
-            file_update_unix_time = tgTime.toSecsSinceEpoch()
-            dt = datetime.datetime.fromtimestamp(file_update_unix_time)
+            #print(type(tgTime) )
+              #   型判定
+            if isinstance(tgTime, str):
+            
+                  if  str =="0:00:00":
+                         continue
+                         
+                  dt = datetime.datetime.strptime(tgTime, '%Y/%m/%d %H:%M:%S')
+                  file_update_unix_time = dt.timestamp()
+            else:
+            
+                  file_update_unix_time = tgTime.toSecsSinceEpoch()
+                  dt = datetime.fromtimestamp(file_update_unix_time)
             #print(tgTime.toSecsSinceEpoch())
             #print( dt )
  
