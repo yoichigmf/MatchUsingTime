@@ -23,8 +23,8 @@
 """
 
 __author__ = 'Yoichi Kayama/Aero Asahi Corp'
-__date__ = '2021-07-14'
-__copyright__ = '(C) 2021 by Yoichi Kayama/Aero Asahi Corp'
+__date__ = '2022-01-02'
+__copyright__ = '(C) 2022 by Yoichi Kayama/Aero Asahi Corp'
 
 # This will get replaced with a git SHA1 when you do a git archive
 
@@ -60,7 +60,7 @@ from qgis.core import (QgsProcessing,
 
 
 
-class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
+class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
     """
     This is an example algorithm that takes a vector layer and
     creates a new identical one.
@@ -135,7 +135,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 'Input File extension',  
                # behavior=QgsProcessingParameterFile.Folder,
                # fileFilter='JPEG (*.JPG)',
-                defaultValue=".JPG"
+                defaultValue=".MP4"
             )
             
         )
@@ -398,7 +398,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return '画像マッチング'
+        return 'MP4動画マッチング'
 
     def displayName(self):
         """
@@ -428,4 +428,4 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return MatchUsingTimeAlgorithm()
+        return MatchMp4UsingTimeAlgorithm()

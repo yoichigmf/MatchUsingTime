@@ -32,6 +32,7 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .MatchUsingTime_algorithm import MatchUsingTimeAlgorithm
+from .MatchUsingTime_MP4algorithm  import MatchMp4UsingTimeAlgorithm
 import os
 import inspect
 from qgis.PyQt.QtGui import QIcon
@@ -56,6 +57,8 @@ class MatchUsingTimeProvider(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         self.addAlgorithm(MatchUsingTimeAlgorithm())
+        self.addAlgorithm(MatchMp4UsingTimeAlgorithm())
+        
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 
