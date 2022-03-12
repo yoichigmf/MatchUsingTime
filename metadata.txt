@@ -6,7 +6,7 @@
 name=MatchUsingTime
 qgisMinimumVersion=3.0
 description=Match the time and point sequence with location information with the file with time information to generate the point at the position of the file.
-version=0.13
+version=0.23
 author=Yoichi Kayama/Aero Asahi Corp
 email=yoichi.kayama@gmail.com
 
