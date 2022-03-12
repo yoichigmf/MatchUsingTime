@@ -35,6 +35,7 @@ import stat
 import time
 import datetime
 import glob
+import cv2
 
 from qgis.PyQt.QtCore import ( QCoreApplication,
                              QDateTime , QVariant)
@@ -193,6 +194,10 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
         fields.append(QgsField("filename", QVariant.String))
         fields.append(QgsField("filetime", QVariant.String))
         fields.append(QgsField("logtime", QVariant.String))
+
+        fields.append(QgsField("vsec", QVariant.Double))
+        fields.append(QgsField("frame_count", QVariant.Double))
+        fields.append(QgsField("fps", QVariant.Double))   
         
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
                 context, fields, QgsWkbTypes.Point, source.sourceCrs())
@@ -238,6 +243,13 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
             np = self.getTimeNearest( modTimesinceEpoc , nArray )
             
             #   エラーの場合の対応追加
+
+            cap = cv2.VideoCapture(file) 
+            video_frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT) # フレーム数を取得する
+            video_fps = cap.get(cv2.CAP_PROP_FPS)                 # フレームレートを取得する
+            video_len_sec = video_frame_count / video_fps         # 長さ（秒）を計算する
+
+
             
             #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
@@ -245,13 +257,20 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
             #print("nearest ==")
             #print(np["time"])
             
+
+
             nfeature = QgsFeature(fields)
             
             nfeature["idc"]  = idc
             nfeature["filename"] = file
             nfeature["filetime"] = motstr
+   
             nfeature["logtime"] = logstr
-            
+
+            nfeature["vsec"] = video_len_sec  
+            nfeature["frame_count"] = video_frame_count   
+            nfeature["fps"] = video_fps 
+
             pointxy = QgsPointXY(np["x"],np["y"])
             geom = QgsGeometry.fromPointXY(pointxy)
             nfeature.setGeometry(geom)
