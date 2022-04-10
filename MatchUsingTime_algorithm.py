@@ -52,6 +52,7 @@ from qgis.core import (QgsProcessing,
                        QgsFeature ,
                        QgsFields ,
                        QgsField,
+                       QgsFeatureRequest,
                        QgsProcessingParameterString,
                        QgsProcessingParameterNumber,
                         QgsProcessingParameterField)
@@ -112,7 +113,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         QgsProcessingParameterField(
                 self.TFIELD,
                 'Time field',
-                type=QgsProcessingParameterField.DateTime |QgsProcessingParameterField.String,
+              #  type=QgsProcessingParameterField.DateTime |QgsProcessingParameterField.String,
+              type=QgsProcessingParameterField.DateTime ,
                 parentLayerParameterName=self.INPUT))
                 
         
@@ -140,16 +142,16 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             
         )
 
-        self.addParameter(
-        QgsProcessingParameterBoolean(
-                self.MVLENGTH,
-                'Add length of movie',  
-               # behavior=QgsProcessingParameterFile.Folder,
+        #self.addParameter(
+        #QgsProcessingParameterBoolean(
+        #        self.MVLENGTH,
+        #        'Add length of movie',  
+        #       # behavior=QgsProcessingParameterFile.Folder,
                # fileFilter='JPEG (*.JPG)',
-                defaultValue=False
-            )
+        #        defaultValue=False
+        #    )
 
-        )
+        #)
    
    
         self.addParameter( 
@@ -158,7 +160,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 'Threshold seconds',  
                # behavior=QgsProcessingParameterFile.Folder,
                # fileFilter='JPEG (*.JPG)',
-                defaultValue=300
+                defaultValue=30
             )
             
         )     
@@ -210,8 +212,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         nArray = sorted( pArray , key=lambda x:x["time"] )
         
         print( nArray )
-        
-        
+        threshold = self.parameterAsDouble( parameters, self.THS, context )
         tgfolder = self.parameterAsString(parameters, self.IFOLDER, context)
         
         #  ファイル拡張子のフィルタ  再検討  大文字、小文字  MP4 とかの対応
@@ -222,7 +223,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         for file in files:
             modTimesinceEpoc = os.path.getmtime(file)
             #modificationTime = time.strftime('%Y-%m-%d %H:%M:%S', modTimesinceEpoc)
-            modTimesinceEpoc = modTimesinceEpoc - ( 9.0 * 60.0 * 60.0 )
+
+            #modTimesinceEpoc = modTimesinceEpoc - ( 9.0 * 60.0 * 60.0 * 2)
             
             dt = datetime.datetime.fromtimestamp(modTimesinceEpoc)
             motstr = dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -233,11 +235,18 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             #qftime = QDateTime.fromMSecsSinceEpoch(modTimesinceEpoc)
             #print(file)
             #print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
+
+   
+
+            print( "file time "+ str(modTimesinceEpoc ))
             
             #  search nearest time point coordinate
-            np = self.getTimeNearest( modTimesinceEpoc , nArray )
+            np = self.getTimeNearest( modTimesinceEpoc , nArray , threshold)
             
             #   エラーの場合の対応追加
+
+            if np is None:
+                continue
             
             #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
@@ -292,7 +301,7 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
         
 
     
-    def getTimeNearest(self,  modTimesinceEpoc , nArray ):
+    def getTimeNearest(self,  modTimesinceEpoc , nArray , th):
         tw = nArray[0]
         
         #   先頭ポイントと指定ファイルの時間差
@@ -326,6 +335,8 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
                 
                 #print( nsa )
                 
+                if nsa > th:
+                    return  None
                
                 if nsa < sa :
                       return pt
@@ -336,7 +347,12 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
             last_pt = pt
             
 
-            
+
+        nss = abs( modTimesinceEpoc-last_pt["time"] )
+
+        print("nss "+ str(nss) )
+        if nss > th:
+            return None
     
         return last_pt
     
@@ -350,7 +366,10 @@ class MatchUsingTimeAlgorithm(QgsProcessingAlgorithm):
     
         #features = source.getFeatures()
 
-        for  feature in source.getFeatures():
+        request=QgsFeatureRequest().addOrderBy(tgField)
+
+
+        for  feature in source.getFeatures( request):
             tgTime = feature[tgField]
             
             #print(type(tgTime) )
