@@ -244,11 +244,7 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
             #print(file)
             #print(" Last Modified Time : ", qftime.toString('%Y-%m-%d %H:%M:%S') )
             
-            #  search nearest time point coordinate
-            np = self.getTimeNearest( modTimesinceEpoc , pArray , ths )
 
-            if np is None:
-                continue
             
             #   エラーの場合の対応追加
 
@@ -258,6 +254,18 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
             video_len_sec = video_frame_count / video_fps         # 長さ（秒）を計算する
 
 
+            stime = modTimesinceEpoc - video_len_sec
+
+            dt2 = datetime.datetime.fromtimestamp( stime )
+            motstr2 = dt2.strftime('%Y-%m-%d %H:%M:%S')
+
+            print("mod time " + str( dt2 ) )
+            #print("file ==")
+            #  search nearest time point coordinate
+            #np = self.getTimeNearest( modTimesinceEpoc , pArray , ths )
+            np = self.getTimeNearest( stime , pArray , ths )
+            if np is None:
+                continue
             
             #print(np)
             dt = datetime.datetime.fromtimestamp(np["time"])
@@ -275,7 +283,7 @@ class MatchMp4UsingTimeAlgorithm(QgsProcessingAlgorithm):
             
             nfeature["idc"]  = idc
             nfeature["filename"] = file
-            nfeature["filetime"] = motstr
+            nfeature["filetime"] = motstr2
    
             nfeature["logtime"] = logstr
 
