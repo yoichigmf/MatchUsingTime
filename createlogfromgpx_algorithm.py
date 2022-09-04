@@ -103,7 +103,7 @@ class CreateLogFromGpxAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
-                self.tr('Time log layer'),
+                self.tr('Time log layer(GPX file)'),
                 [QgsProcessing.TypeVectorPoint ]
             )
         )
@@ -129,6 +129,13 @@ class CreateLogFromGpxAlgorithm(QgsProcessingAlgorithm):
             
         )
 
+       
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT,
+                self.tr('Output layer')
+            )
+        )
         #self.addParameter(
         #QgsProcessingParameterBoolean(
         #        self.MVLENGTH,
@@ -144,27 +151,6 @@ class CreateLogFromGpxAlgorithm(QgsProcessingAlgorithm):
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
         # algorithm is run in QGIS).
-
-        self.addOutput(
-           QgsProcessingOutputVectorLayer(
-        self.OUTPUT,
-        self.tr('Output'),
-        type = QgsProcessing.TypeVectorAnyGeometry)
-        )
-
-        """
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(
-                self.OUTPUT,
-                self.tr('Output layer')
-            )
-        )
-        """
-
-        self.addParameter(
-              QgsProcessingParameterFileDestination(self.OFILENAME, 
-               self.tr('Output geopackage file name'), optional=False, fileFilter='GeoPackage (*.gpkg *.GPKG)'))
-        
 
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -196,10 +182,14 @@ class CreateLogFromGpxAlgorithm(QgsProcessingAlgorithm):
        # fields.append(QgsField("idc" , QVariant.Int))
        # fields.append(QgsField("filename", QVariant.String))
         #fields.append(QgsField("filetime", QVariant.String))
-        #fields.append(QgsField("logtime", QVariant.String))
+        fields.append(QgsField("tdtime", QVariant.DateTime))
         #
 
         #   出力用　GeoPackage  を作成する
+
+
+        (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
+                context, fields, source.wkbType(), source.sourceCrs())
 
 
         
@@ -222,13 +212,25 @@ class CreateLogFromGpxAlgorithm(QgsProcessingAlgorithm):
                   file_update_unix_time = tgTime.toSecsSinceEpoch()
                   dt = datetime.datetime.fromtimestamp(file_update_unix_time)
 
+            new_feature =  QgsFeature()
+        # Set geometry 
+            new_feature.setGeometry(feature.geometry())
+        # Set attributes from sum_unique_values dictionary that we had computed
+
+
+            #new_feature.setAttributes([f[dissolve_field], sum_unique_values[f[dissolve_field]]])
+
+            attributes = feature.attributes() 
+
+            new_feature.setAttributes(attributes)
+            #new_feature["tdtime"] = tgTime
+            #new_feature.setAttribute( 'tdtime', tgTime)
+            sink.addFeature(new_feature, QgsFeatureSink.FastInsert)
 
 
 
         
-        (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
-                context, fields, QgsWkbTypes.Point, source.sourceCrs())
-
+      
 
 
 
